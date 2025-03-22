@@ -1,0 +1,15 @@
+tasks.register('copyFileForFlavors') {
+    doLast {
+        def sourceFile = file("${rootDir}/README.md")
+
+        android.productFlavors.all { flavor ->
+            def flavorDir = layout.buildDirectory.dir("flavors/${flavor.name}").get().asFile
+            flavorDir.mkdirs()
+
+            copy {
+                from sourceFile
+                into flavorDir
+            }
+        }
+    }
+}

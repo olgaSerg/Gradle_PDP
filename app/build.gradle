@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -19,14 +20,52 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        debug {
+            minifyEnabled false
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-DEBUG"
+        }
     }
+
+    splits {
+        density {
+            enable = true
+            reset()
+            include("mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi")
+            compatibleScreens("small", "normal", "large", "xlarge")
+        }
+    }
+
+    flavorDimensions += "version"
+
+    productFlavors {
+        create("free") {
+            dimension = "version"
+            applicationId = "com.example.gradle_pdp.free"
+        }
+        create("paid") {
+            dimension = "version"
+            applicationId = "com.example.gradle_pdp.paid"
+        }
+    }
+
+    applicationVariants.configureEach { variant ->
+        variant.outputs.configureEach { output ->
+            def flavorName = variant.flavorName ?: "default"
+            def buildType = variant.buildType.name
+
+            output.outputFileName = "Gradle_PDP_${flavorName}_${buildType}.apk"
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+
     kotlinOptions {
         jvmTarget = '11'
     }
@@ -34,12 +73,30 @@ android {
 
 dependencies {
 
-    implementation libs.androidx.core.ktx
-    implementation libs.androidx.appcompat
-    implementation libs.material
-    implementation libs.androidx.activity
-    implementation libs.androidx.constraintlayout
-    testImplementation libs.junit
-    androidTestImplementation libs.androidx.junit
-    androidTestImplementation libs.androidx.espresso.core
+    // Core Android libraries
+    implementation(libs.bundles.android.core)
+
+    // Kotlin and Coroutines
+    implementation(libs.bundles.kotlin)
+
+    // Networking
+    implementation(libs.bundles.networking)
+
+    // Jetpack Lifecycle
+    implementation(libs.bundles.lifecycle)
+
+    // Room
+    implementation(libs.bundles.room)
+    implementation libs.androidx.monitor
+    implementation libs.androidx.junit.ktx
+    ksp(libs.room.compiler)
+
+    // Dagger
+    implementation(libs.bundles.dagger)
+    ksp(libs.dagger.compiler)
+
+    // Testing
+    testImplementation(libs.bundles.testing)
 }
+
+apply from: "${rootDir}/gradle/tasks.gradle"
